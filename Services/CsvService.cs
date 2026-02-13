@@ -19,6 +19,10 @@ namespace PersonalPPEManager.Services
         };
         private readonly int ExpectedColumnCount = 9; // 对应上面列的数量
 
+        private static readonly Encoding Utf8WithBomEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
+        private static readonly Encoding Utf8StrictEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+        private static readonly Encoding Gb18030Encoding = Encoding.GetEncoding("GB18030");
+
         /// <summary>
         /// 解析指定的CSV文件，将其内容转换为Employee对象列表。
         /// </summary>
@@ -46,8 +50,9 @@ namespace PersonalPPEManager.Services
             string[] lines;
             try
             {
-                lines = File.ReadAllLines(filePath); // 建议使用UTF-8编码的CSV文件
-                System.Diagnostics.Debug.WriteLine($"DEBUG: CsvService.ParseEmployeeCsv: Read {lines.Length} lines from file.");
+                Encoding usedEncoding;
+                lines = ReadAllLinesWithEncodingFallback(filePath, out usedEncoding);
+                System.Diagnostics.Debug.WriteLine($"DEBUG: CsvService.ParseEmployeeCsv: Read {lines.Length} lines from file. Encoding={usedEncoding?.WebName}");
             }
             catch (Exception ex)
             {
@@ -170,6 +175,32 @@ namespace PersonalPPEManager.Services
             return result;
         }
 
+        private string[] ReadAllLinesWithEncodingFallback(string filePath, out Encoding usedEncoding)
+        {
+            try
+            {
+                usedEncoding = Utf8StrictEncoding;
+                return File.ReadAllLines(filePath, Utf8StrictEncoding);
+            }
+            catch (DecoderFallbackException)
+            {
+                System.Diagnostics.Debug.WriteLine("DEBUG: CsvService.ReadAllLinesWithEncodingFallback: UTF-8 strict decode failed, fallback to GB18030.");
+            }
+
+            try
+            {
+                usedEncoding = Gb18030Encoding;
+                return File.ReadAllLines(filePath, Gb18030Encoding);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DEBUG: CsvService.ReadAllLinesWithEncodingFallback: GB18030 decode failed: {ex.Message}. Fallback to Encoding.Default.");
+            }
+
+            usedEncoding = Encoding.Default;
+            return File.ReadAllLines(filePath, Encoding.Default);
+        }
+
         /// <summary>
         /// 安全地从字符串数组中获取指定索引的值，并进行 Trim。如果索引越界或值为空字符串/null，则返回 null。
         /// </summary>
@@ -177,7 +208,7 @@ namespace PersonalPPEManager.Services
         {
             if (index < array.Length && !string.IsNullOrWhiteSpace(array[index]))
             {
-                return array[index].Trim();
+                return array[index].Trim().TrimStart('﻿');
             }
             return null;
         }
@@ -229,7 +260,7 @@ namespace PersonalPPEManager.Services
 
             try
             {
-                File.WriteAllText(filePath, csvBuilder.ToString(), Encoding.UTF8); // 使用UTF-8编码写入
+                File.WriteAllText(filePath, csvBuilder.ToString(), Utf8WithBomEncoding); // 使用带BOM的UTF-8，兼容Excel直接打开
                 System.Diagnostics.Debug.WriteLine($"DEBUG: CsvService.WriteEmployeesToCsv: Successfully written to {filePath}");
                 return true;
             }
