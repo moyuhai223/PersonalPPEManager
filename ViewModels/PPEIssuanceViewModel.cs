@@ -355,8 +355,8 @@ namespace PersonalPPEManager.ViewModels
             if (currentActiveCount + pendingNewCount > maxAllowed)
             {
                 MessageBox.Show(
-                    $"员工当前有效{displayName}数量为 {currentActiveCount}，本次新增 {pendingNewCount}，将超过上限 {maxAllowed}。
-请先在综合查询中将旧记录设为无效，或调整发放数量。",
+                    $"员工当前有效{displayName}数量为 {currentActiveCount}, 本次新增 {pendingNewCount}, 将超过上限 {maxAllowed}.\n" +
+                    "请先在综合查询中将旧记录设为无效，或调整发放数量。",
                     "操作受限",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
