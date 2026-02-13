@@ -180,48 +180,15 @@ namespace PersonalPPEManager.ViewModels
             {
                 if (SelectedSearchType == SearchTypeByIdConst)
                 {
-                    var employee = SQLiteDataAccess.GetEmployeeById(SearchTerm);
-                    if (employee != null)
-                    {
-                        DisplayEmployeeDetails(employee);
-                    }
-                    else
-                    {
-                        MessageBox.Show($"未找到工号为 '{SearchTerm}' 的员工。", "查询结果", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
+                    SearchByEmployeeId();
                 }
                 else if (SelectedSearchType == SearchByNameConst)
                 {
-                    var employees = SQLiteDataAccess.SearchEmployeesByName(SearchTerm);
-                    if (employees == null || !employees.Any())
-                    {
-                        MessageBox.Show($"未找到姓名为 '{SearchTerm}' (或相似) 的员工。", "查询结果", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    else if (employees.Count == 1)
-                    {
-                        DisplayEmployeeDetails(employees.First());
-                    }
-                    else
-                    {
-                        foreach (var emp in employees)
-                        {
-                            SearchResultsEmployees.Add(emp);
-                        }
-                        IsSearchResultsVisible = true;
-                        Debug.WriteLine($"DEBUG: QueryVM.ExecuteSearch: Multiple employees found by name. Count: {SearchResultsEmployees.Count}");
-                    }
+                    SearchByEmployeeName();
                 }
                 else if (SelectedSearchType == SearchBySuitCodeConst)
                 {
-                    var employee = SQLiteDataAccess.GetEmployeeByPPESpecificCode(SearchTerm, SuitPpeTypeForSearch);
-                    if (employee != null)
-                    {
-                        DisplayEmployeeDetails(employee);
-                    }
-                    else
-                    {
-                        MessageBox.Show($"未找到持有洁净服编码为 '{SearchTerm}' 的员工，或者该洁净服当前并非有效状态。", "查询结果", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
+                    SearchBySuitCode();
                 }
                 else
                 {
@@ -235,6 +202,56 @@ namespace PersonalPPEManager.ViewModels
                 MessageBox.Show($"搜索过程中发生错误: {ex.Message}", "搜索错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             Debug.WriteLine("DEBUG: QueryVM.ExecuteSearch: Method finished.");
+        }
+
+        private void SearchByEmployeeId()
+        {
+            var employee = SQLiteDataAccess.GetEmployeeById(SearchTerm);
+            if (employee != null)
+            {
+                DisplayEmployeeDetails(employee);
+            }
+            else
+            {
+                MessageBox.Show($"未找到工号为 '{SearchTerm}' 的员工。", "查询结果", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void SearchByEmployeeName()
+        {
+            var employees = SQLiteDataAccess.SearchEmployeesByName(SearchTerm);
+            if (employees == null || !employees.Any())
+            {
+                MessageBox.Show($"未找到姓名为 '{SearchTerm}' (或相似) 的员工。", "查询结果", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (employees.Count == 1)
+            {
+                DisplayEmployeeDetails(employees.First());
+                return;
+            }
+
+            foreach (var emp in employees)
+            {
+                SearchResultsEmployees.Add(emp);
+            }
+
+            IsSearchResultsVisible = true;
+            Debug.WriteLine($"DEBUG: QueryVM.ExecuteSearch: Multiple employees found by name. Count: {SearchResultsEmployees.Count}");
+        }
+
+        private void SearchBySuitCode()
+        {
+            var employee = SQLiteDataAccess.GetEmployeeByPPESpecificCode(SearchTerm, SuitPpeTypeForSearch);
+            if (employee != null)
+            {
+                DisplayEmployeeDetails(employee);
+            }
+            else
+            {
+                MessageBox.Show($"未找到持有洁净服编码为 '{SearchTerm}' 的员工，或者该洁净服当前并非有效状态。", "查询结果", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
         private void DisplayEmployeeDetails(Employee employee)
