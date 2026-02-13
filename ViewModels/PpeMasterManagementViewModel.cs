@@ -10,6 +10,9 @@ using System.Windows.Input;
 using System.Linq;
 using System.Diagnostics;
 using System.Windows;
+using Microsoft.Win32;
+using System.IO;
+using System.Text;
 
 namespace PersonalPPEManager.ViewModels
 {
@@ -119,6 +122,8 @@ namespace PersonalPPEManager.ViewModels
         public ICommand AddMasterItemCommand { get; }
         public ICommand EditMasterItemCommand { get; }
         public ICommand DeleteMasterItemCommand { get; }
+        public ICommand ImportMasterItemsCommand { get; }
+        public ICommand ExportMasterItemsCommand { get; }
         #endregion
 
         public PpeMasterManagementViewModel()
@@ -140,6 +145,8 @@ namespace PersonalPPEManager.ViewModels
             AddMasterItemCommand = new RelayCommand(ExecuteAddMasterItem);
             EditMasterItemCommand = new RelayCommand(ExecuteEditMasterItem, CanExecuteEditOrDeleteMasterItem);
             DeleteMasterItemCommand = new RelayCommand(ExecuteDeleteMasterItem, CanExecuteEditOrDeleteMasterItem);
+            ImportMasterItemsCommand = new RelayCommand(ExecuteImportMasterItems);
+            ExportMasterItemsCommand = new RelayCommand(ExecuteExportMasterItems);
 
             ExecuteLoadCategories(null);
             ExecuteLoadMasterItems(null);
@@ -495,6 +502,204 @@ namespace PersonalPPEManager.ViewModels
             }
             else { Debug.WriteLine($"DEBUG: PpeMasterMgmtVM.ExecuteDeleteMasterItem: Deletion cancelled by user for Item ID: {_selectedMasterItemData.ItemMasterID}"); }
         }
+
+        private void ExecuteExportMasterItems(object parameter)
+        {
+            var saveDialog = new SaveFileDialog
+            {
+                Filter = "CSV 文件 (*.csv)|*.csv|所有文件 (*.*)|*.*",
+                Title = "导出劳保用品主数据",
+                FileName = $"ppe_master_items_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+            };
+
+            if (saveDialog.ShowDialog() != true) return;
+
+            try
+            {
+                var items = SQLiteDataAccess.GetAllMasterItems() ?? new List<PpeMasterItem>();
+                var categories = SQLiteDataAccess.GetAllCategories() ?? new List<PpeCategory>();
+                var categoryMap = categories.ToDictionary(c => c.CategoryID, c => c.CategoryName);
+
+                var sb = new StringBuilder();
+                sb.AppendLine("ItemMasterCode,ItemName,CategoryName,Size,UnitOfMeasure,ExpectedLifespanDays,DefaultRemarks,CurrentStock,LowStockThreshold");
+
+                foreach (var item in items.OrderBy(i => i.ItemName))
+                {
+                    categoryMap.TryGetValue(item.CategoryID_FK, out string categoryName);
+                    var row = string.Join(",", new[]
+                    {
+                        EscapeCsvField(item.ItemMasterCode),
+                        EscapeCsvField(item.ItemName),
+                        EscapeCsvField(categoryName),
+                        EscapeCsvField(item.Size),
+                        EscapeCsvField(item.UnitOfMeasure),
+                        EscapeCsvField(item.ExpectedLifespanDays?.ToString()),
+                        EscapeCsvField(item.DefaultRemarks),
+                        EscapeCsvField(item.CurrentStock.ToString()),
+                        EscapeCsvField(item.LowStockThreshold.ToString())
+                    });
+                    sb.AppendLine(row);
+                }
+
+                File.WriteAllText(saveDialog.FileName, sb.ToString(), new UTF8Encoding(true));
+                LoggingService.LogAction("主数据管理", $"导出主数据条目 {items.Count} 条到文件: {Path.GetFileName(saveDialog.FileName)}");
+                MessageBox.Show($"主数据导出成功，共 {items.Count} 条。", "导出完成", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"DEBUG: PpeMasterMgmtVM.ExecuteExportMasterItems: EXCEPTION: {ex.Message}");
+                MessageBox.Show($"导出主数据失败: {ex.Message}", "导出失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ExecuteImportMasterItems(object parameter)
+        {
+            var openDialog = new OpenFileDialog
+            {
+                Filter = "CSV 文件 (*.csv)|*.csv|所有文件 (*.*)|*.*",
+                Title = "导入劳保用品主数据",
+                CheckFileExists = true
+            };
+
+            if (openDialog.ShowDialog() != true) return;
+
+            try
+            {
+                ExecuteLoadCategories(null);
+                ExecuteLoadMasterItems(null);
+
+                var lines = File.ReadAllLines(openDialog.FileName, new UTF8Encoding(false));
+                if (lines.Length <= 1)
+                {
+                    MessageBox.Show("CSV文件为空或仅包含表头。", "导入提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var categoryNameMap = (AllCategories ?? new ObservableCollection<PpeCategory>())
+                    .GroupBy(c => c.CategoryName ?? string.Empty)
+                    .ToDictionary(g => g.Key.Trim(), g => g.First().CategoryID, StringComparer.OrdinalIgnoreCase);
+
+                int added = 0, updated = 0, skipped = 0;
+
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    var line = lines[i];
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    var cols = ParseCsvLine(line);
+                    if (cols.Count < 9) { skipped++; continue; }
+
+                    string code = cols[0]?.Trim();
+                    string itemName = cols[1]?.Trim();
+                    string categoryName = cols[2]?.Trim();
+                    if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(itemName) || string.IsNullOrWhiteSpace(categoryName))
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    if (!categoryNameMap.TryGetValue(categoryName, out int categoryId) || categoryId <= 0)
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    bool lifespanValid = int.TryParse(cols[5], out int lifespanParsed);
+                    int.TryParse(cols[7], out int stock);
+                    int.TryParse(cols[8], out int lowStock);
+
+                    var existing = _allMasterItemsInternal?.FirstOrDefault(x => string.Equals(x.ItemMasterCode, code, StringComparison.OrdinalIgnoreCase));
+                    var model = new PpeMasterItem
+                    {
+                        ItemMasterCode = code,
+                        ItemName = itemName,
+                        CategoryID_FK = categoryId,
+                        Size = string.IsNullOrWhiteSpace(cols[3]) ? null : cols[3].Trim(),
+                        UnitOfMeasure = string.IsNullOrWhiteSpace(cols[4]) ? null : cols[4].Trim(),
+                        ExpectedLifespanDays = lifespanValid ? (int?)lifespanParsed : null,
+                        DefaultRemarks = string.IsNullOrWhiteSpace(cols[6]) ? null : cols[6].Trim(),
+                        CurrentStock = stock,
+                        LowStockThreshold = lowStock
+                    };
+
+                    if (existing == null)
+                    {
+                        if (SQLiteDataAccess.AddMasterItem(model) > 0)
+                            added++;
+                        else
+                            skipped++;
+                    }
+                    else
+                    {
+                        model.ItemMasterID = existing.ItemMasterID;
+                        if (SQLiteDataAccess.UpdateMasterItem(model))
+                            updated++;
+                        else
+                            skipped++;
+                    }
+                }
+
+                ExecuteLoadMasterItems(null);
+                LoggingService.LogAction("主数据管理", $"导入主数据完成：新增 {added}，更新 {updated}，跳过 {skipped}。");
+                MessageBox.Show($"导入完成。新增 {added}，更新 {updated}，跳过 {skipped}。", "导入结果", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"DEBUG: PpeMasterMgmtVM.ExecuteImportMasterItems: EXCEPTION: {ex.Message}");
+                MessageBox.Show($"导入主数据失败: {ex.Message}", "导入失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private static List<string> ParseCsvLine(string line)
+        {
+            var result = new List<string>();
+            if (line == null) return result;
+
+            var current = new StringBuilder();
+            bool inQuotes = false;
+
+            for (int i = 0; i < line.Length; i++)
+            {
+                char ch = line[i];
+                if (ch == '"')
+                {
+                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        current.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = !inQuotes;
+                    }
+                }
+                else if (ch == ',' && !inQuotes)
+                {
+                    result.Add(current.ToString());
+                    current.Clear();
+                }
+                else
+                {
+                    current.Append(ch);
+                }
+            }
+
+            result.Add(current.ToString());
+            if (result.Count > 0) result[0] = result[0].TrimStart('\uFEFF');
+            return result;
+        }
+
+        private static string EscapeCsvField(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            if (value.Contains(",") || value.Contains("\"") || value.Contains("\r") || value.Contains("\n"))
+            {
+                return $"\"{value.Replace("\"", "\"\"")}\"";
+            }
+
+            return value;
+        }
+
         #endregion
     }
 }
