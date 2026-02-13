@@ -196,39 +196,120 @@ namespace PersonalPPEManager.ViewModels
 
         private void LoadAvailableSuitMasterItems()
         {
-            AvailableSuitMasterItems.Clear();
+            LoadMasterItemsByCategory(
+                SelectedSuitCategory,
+                AvailableSuitMasterItems,
+                "LoadAvailableSuitMasterItems",
+                "suit");
             SelectedSuitMasterItem = null;
-            if (SelectedSuitCategory != null && SelectedSuitCategory.CategoryID > 0)
-            { /* ... (与之前版本相同) ... */  Debug.WriteLine($"DEBUG: PPEIssuanceVM.LoadAvailableSuitMasterItems for CategoryID: {SelectedSuitCategory.CategoryID}"); try { var mi = SQLiteDataAccess.GetMasterItemsByCategoryId(SelectedSuitCategory.CategoryID); foreach (var i in mi.OrderBy(item => item.ItemName)) AvailableSuitMasterItems.Add(i); Debug.WriteLine($"DEBUG: Loaded {AvailableSuitMasterItems.Count} suit master items."); } catch (Exception ex) { Debug.WriteLine($"EX in LoadAvailableSuitMasterItems: {ex.Message}"); MessageBox.Show($"加载主数据失败: {ex.Message}"); } }
-            else { Debug.WriteLine("DEBUG: PPEIssuanceVM.LoadAvailableSuitMasterItems: No valid category selected."); }
-        }
-        private void LoadAvailableHatMasterItems()
-        {
-            AvailableHatMasterItems.Clear();
-            SelectedHatMasterItem = null;
-            if (SelectedHatCategory != null && SelectedHatCategory.CategoryID > 0)
-            { Debug.WriteLine($"DEBUG: PPEIssuanceVM.LoadAvailableHatMasterItems for CategoryID: {SelectedHatCategory.CategoryID}"); try { var mi = SQLiteDataAccess.GetMasterItemsByCategoryId(SelectedHatCategory.CategoryID); foreach (var i in mi.OrderBy(item => item.ItemName)) AvailableHatMasterItems.Add(i); Debug.WriteLine($"DEBUG: Loaded {AvailableHatMasterItems.Count} hat master items."); } catch (Exception ex) { Debug.WriteLine($"EX in LoadAvailableHatMasterItems: {ex.Message}"); MessageBox.Show($"加载主数据失败: {ex.Message}"); } }
-            else { Debug.WriteLine("DEBUG: PPEIssuanceVM.LoadAvailableHatMasterItems: No valid category selected."); }
-        }
-        private void LoadAvailableSafetyShoeMasterItems()
-        {
-            AvailableSafetyShoeMasterItems.Clear();
-            SelectedSafetyShoeMasterItem = null;
-            if (SelectedSafetyShoeCategory != null && SelectedSafetyShoeCategory.CategoryID > 0)
-            { Debug.WriteLine($"DEBUG: PPEIssuanceVM.LoadAvailableSafetyShoeMasterItems for CategoryID: {SelectedSafetyShoeCategory.CategoryID}"); try { var mi = SQLiteDataAccess.GetMasterItemsByCategoryId(SelectedSafetyShoeCategory.CategoryID); foreach (var i in mi.OrderBy(item => item.ItemName)) AvailableSafetyShoeMasterItems.Add(i); Debug.WriteLine($"DEBUG: Loaded {AvailableSafetyShoeMasterItems.Count} safety shoe master items."); } catch (Exception ex) { Debug.WriteLine($"EX in LoadAvailableSafetyShoeMasterItems: {ex.Message}"); MessageBox.Show($"加载主数据失败: {ex.Message}"); } }
-            else { Debug.WriteLine("DEBUG: PPEIssuanceVM.LoadAvailableSafetyShoeMasterItems: No valid category selected."); }
-        }
-        private void LoadAvailableCanvasShoeMasterItems()
-        {
-            AvailableCanvasShoeMasterItems.Clear();
-            SelectedCanvasShoeMasterItem = null;
-            if (SelectedCanvasShoeCategory != null && SelectedCanvasShoeCategory.CategoryID > 0)
-            { Debug.WriteLine($"DEBUG: PPEIssuanceVM.LoadAvailableCanvasShoeMasterItems for CategoryID: {SelectedCanvasShoeCategory.CategoryID}"); try { var mi = SQLiteDataAccess.GetMasterItemsByCategoryId(SelectedCanvasShoeCategory.CategoryID); foreach (var i in mi.OrderBy(item => item.ItemName)) AvailableCanvasShoeMasterItems.Add(i); Debug.WriteLine($"DEBUG: Loaded {AvailableCanvasShoeMasterItems.Count} canvas shoe master items."); } catch (Exception ex) { Debug.WriteLine($"EX in LoadAvailableCanvasShoeMasterItems: {ex.Message}"); MessageBox.Show($"加载主数据失败: {ex.Message}"); } }
-            else { Debug.WriteLine("DEBUG: PPEIssuanceVM.LoadAvailableCanvasShoeMasterItems: No valid category selected."); }
         }
 
-        private bool CanExecuteLoadEmployee(object parameter) { /* ... 与之前版本相同 ... */ return !string.IsNullOrWhiteSpace(SearchEmployeeID) && !IsSaving; }
-        private void ExecuteLoadEmployee(object parameter) { /* ... 与之前版本相同 ... */ Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Method started. Searching for EmployeeID: '{SearchEmployeeID}'"); if (string.IsNullOrWhiteSpace(SearchEmployeeID)) { Debug.WriteLine("DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: SearchEmployeeID is null or whitespace. Aborting load."); LoadedEmployee = null; MessageBox.Show("请输入有效的员工工号。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning); return; } Employee foundEmployee = null; try { foundEmployee = SQLiteDataAccess.GetEmployeeById(SearchEmployeeID); } catch (Exception ex) { Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Exception during SQLiteDataAccess.GetEmployeeById: {ex.Message}\n{ex.StackTrace}"); MessageBox.Show($"加载员工信息时发生数据库错误: {ex.Message}", "数据库错误", MessageBoxButton.OK, MessageBoxImage.Error); LoadedEmployee = null; return; } LoadedEmployee = foundEmployee; if (LoadedEmployee == null) { Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: No employee found for ID: '{SearchEmployeeID}'."); MessageBox.Show($"未找到工号为 '{SearchEmployeeID}' 的员工。", "提示", MessageBoxButton.OK, MessageBoxImage.Information); } else { Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Employee found and set. ID: '{LoadedEmployee.EmployeeID}', Name: '{LoadedEmployee.Name}'."); } Debug.WriteLine("DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Method finished."); }
+        private void LoadAvailableHatMasterItems()
+        {
+            LoadMasterItemsByCategory(
+                SelectedHatCategory,
+                AvailableHatMasterItems,
+                "LoadAvailableHatMasterItems",
+                "hat");
+            SelectedHatMasterItem = null;
+        }
+
+        private void LoadAvailableSafetyShoeMasterItems()
+        {
+            LoadMasterItemsByCategory(
+                SelectedSafetyShoeCategory,
+                AvailableSafetyShoeMasterItems,
+                "LoadAvailableSafetyShoeMasterItems",
+                "safety shoe");
+            SelectedSafetyShoeMasterItem = null;
+        }
+
+        private void LoadAvailableCanvasShoeMasterItems()
+        {
+            LoadMasterItemsByCategory(
+                SelectedCanvasShoeCategory,
+                AvailableCanvasShoeMasterItems,
+                "LoadAvailableCanvasShoeMasterItems",
+                "canvas shoe");
+            SelectedCanvasShoeMasterItem = null;
+        }
+
+        private void LoadMasterItemsByCategory(
+            PpeCategory selectedCategory,
+            ObservableCollection<PpeMasterItem> targetCollection,
+            string methodName,
+            string itemTypeLabel)
+        {
+            targetCollection.Clear();
+
+            if (selectedCategory != null && selectedCategory.CategoryID > 0)
+            {
+                Debug.WriteLine($"DEBUG: PPEIssuanceVM.{methodName} for CategoryID: {selectedCategory.CategoryID}");
+                try
+                {
+                    var masterItems = SQLiteDataAccess.GetMasterItemsByCategoryId(selectedCategory.CategoryID);
+                    foreach (var item in masterItems.OrderBy(i => i.ItemName))
+                    {
+                        targetCollection.Add(item);
+                    }
+
+                    Debug.WriteLine($"DEBUG: Loaded {targetCollection.Count} {itemTypeLabel} master items.");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"EX in {methodName}: {ex.Message}");
+                    MessageBox.Show($"加载主数据失败: {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.WriteLine($"DEBUG: PPEIssuanceVM.{methodName}: No valid category selected.");
+            }
+        }
+
+        private bool CanExecuteLoadEmployee(object parameter)
+        {
+            return !string.IsNullOrWhiteSpace(SearchEmployeeID) && !IsSaving;
+        }
+
+        private void ExecuteLoadEmployee(object parameter)
+        {
+            Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Method started. Searching for EmployeeID: '{SearchEmployeeID}'");
+
+            if (string.IsNullOrWhiteSpace(SearchEmployeeID))
+            {
+                Debug.WriteLine("DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: SearchEmployeeID is null or whitespace. Aborting load.");
+                LoadedEmployee = null;
+                MessageBox.Show("请输入有效的员工工号。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            Employee foundEmployee = null;
+            try
+            {
+                foundEmployee = SQLiteDataAccess.GetEmployeeById(SearchEmployeeID);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Exception during SQLiteDataAccess.GetEmployeeById: {ex.Message}\n{ex.StackTrace}");
+                MessageBox.Show($"加载员工信息时发生数据库错误: {ex.Message}", "数据库错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                LoadedEmployee = null;
+                return;
+            }
+
+            LoadedEmployee = foundEmployee;
+            if (LoadedEmployee == null)
+            {
+                Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: No employee found for ID: '{SearchEmployeeID}'.");
+                MessageBox.Show($"未找到工号为 '{SearchEmployeeID}' 的员工。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Employee found and set. ID: '{LoadedEmployee.EmployeeID}', Name: '{LoadedEmployee.Name}'.");
+            }
+
+            Debug.WriteLine("DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Method finished.");
+        }
 
         private void ResetPPEInputs()
         {
@@ -262,6 +343,28 @@ namespace PersonalPPEManager.ViewModels
         private bool IsAnyNewPPEBeingIssued() { /* ... 与之前版本相同 ... */ return Suit1_IsBeingIssued || Suit2_IsBeingIssued || Suit3_IsBeingIssued || Hat1_IsBeingIssued || Hat2_IsBeingIssued || Hat3_IsBeingIssued || SafetyShoes_IsBeingIssued || CanvasShoes_IsBeingIssued; }
         private bool ValidatePPEItem(bool isBeingIssued, DateTime? issueDate, string typeForLogDisplay, string itemCode = null, bool codeRequired = true, string size = null, bool sizeRequiredIfIssued = false) { /* ... 与之前版本相同 ... */ if (!isBeingIssued) return true; if (issueDate == null) { MessageBox.Show($"{typeForLogDisplay} 的发放日期不能为空。", "验证错误"); return false; } if (codeRequired && string.IsNullOrWhiteSpace(itemCode)) { MessageBox.Show($"{typeForLogDisplay} 的物品编号不能为空。", "验证错误"); return false; } if (sizeRequiredIfIssued && string.IsNullOrWhiteSpace(size)) { MessageBox.Show($"{typeForLogDisplay} 的尺码不能为空。", "验证错误"); return false; } return true; }
         private bool CanExecuteSaveIssuance(object parameter) { /* ... 与之前版本相同, 已包含IsSaving检查 ... */ bool hasNewItems = IsAnyNewPPEBeingIssued(); bool canSaveInReplacementMode = IsSuitReplacementModeActive && SelectedSuitForReplacement != null && SelectedSuitMasterItem != null && (Suit1_IsBeingIssued || Suit2_IsBeingIssued || Suit3_IsBeingIssued); bool canSave = IsEmployeeLoaded && (hasNewItems || canSaveInReplacementMode) && !IsSaving; return canSave; }
+
+        private bool EnsureActiveLimitNotExceeded(string ppeType, int pendingNewCount, int maxAllowed, string displayName)
+        {
+            if (pendingNewCount <= 0) return true;
+
+            int currentActiveCount = SQLiteDataAccess
+                .GetPPEAssignmentsForEmployeeAndType(LoadedEmployee.EmployeeID, ppeType, activeOnly: true)
+                .Count;
+
+            if (currentActiveCount + pendingNewCount > maxAllowed)
+            {
+                MessageBox.Show(
+                    $"员工当前有效{displayName}数量为 {currentActiveCount}, 本次新增 {pendingNewCount}, 将超过上限 {maxAllowed}.\n" +
+                    "请先在综合查询中将旧记录设为无效，或调整发放数量。",
+                    "操作受限",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return false;
+            }
+
+            return true;
+        }
 
         private void ExecuteSaveIssuance(object parameter)
         {
@@ -321,7 +424,8 @@ namespace PersonalPPEManager.ViewModels
                 {
                     if (hatMaster == null) { MessageBox.Show("请为帽子选择类别和规格主数据。", "选择主数据"); IsSaving = false; return; }
                     if (hatMaster.CurrentStock < pendingNewHats.Count) { MessageBox.Show($"帽子“{hatMaster.ItemName}”库存不足。", "库存不足"); IsSaving = false; return; }
-                    // TODO: Add Hat replacement logic if MaxActiveHats is configured and exceeded
+                    if (!EnsureActiveLimitNotExceeded(hatCategoryName, pendingNewHats.Count, _configService.MaxActiveHats, "帽子")) { IsSaving = false; return; }
+
                     foreach (var newHatInfo in pendingNewHats) { assignmentsToAdd.Add(new PPEAssignment { EmployeeID_FK = LoadedEmployee.EmployeeID, PPE_Type = hatCategoryName, ItemSpecificCode = newHatInfo.Code, IssueDate = newHatInfo.Date, Size = hatMaster.Size, ItemMasterID_FK = hatMaster.ItemMasterID, IsActive = true }); masterItemsToUpdateStock.TryGetValue(hatMaster.ItemMasterID, out int cH); masterItemsToUpdateStock[hatMaster.ItemMasterID] = cH + 1; }
                 }
 
@@ -331,7 +435,7 @@ namespace PersonalPPEManager.ViewModels
                     if (SelectedSafetyShoeMasterItem == null || SelectedSafetyShoeCategory == null) { MessageBox.Show("请为白色劳保鞋选择类别和规格主数据。", "选择主数据"); IsSaving = false; return; }
                     if (SelectedSafetyShoeMasterItem.CurrentStock < 1) { MessageBox.Show($"“{SelectedSafetyShoeMasterItem.ItemName}”库存不足。", "库存不足"); IsSaving = false; return; }
                     if (!ValidatePPEItem(true, SafetyShoes_IssueDate, SelectedSafetyShoeMasterItem.ItemName, codeRequired: false, size: SelectedSafetyShoeMasterItem.Size, sizeRequiredIfIssued: true) || string.IsNullOrWhiteSpace(SafetyShoes_Condition)) { if (string.IsNullOrWhiteSpace(SafetyShoes_Condition)) MessageBox.Show($"{SelectedSafetyShoeMasterItem.ItemName}的新旧状态不能为空。", "验证错误"); IsSaving = false; return; }
-                    // TODO: Add SafetyShoe replacement logic if MaxActiveSafetyShoes is configured and exceeded
+                    if (!EnsureActiveLimitNotExceeded(SelectedSafetyShoeCategory.CategoryName, 1, _configService.MaxActiveSafetyShoes, "白色劳保鞋")) { IsSaving = false; return; }
                     assignmentsToAdd.Add(new PPEAssignment { EmployeeID_FK = LoadedEmployee.EmployeeID, PPE_Type = SelectedSafetyShoeCategory.CategoryName, ItemSpecificCode = null, IssueDate = SafetyShoes_IssueDate, Size = SelectedSafetyShoeMasterItem.Size, Condition = SafetyShoes_Condition, ItemMasterID_FK = SelectedSafetyShoeMasterItem.ItemMasterID, IsActive = true });
                     masterItemsToUpdateStock.TryGetValue(SelectedSafetyShoeMasterItem.ItemMasterID, out int cSS); masterItemsToUpdateStock[SelectedSafetyShoeMasterItem.ItemMasterID] = cSS + 1;
                 }
@@ -341,7 +445,7 @@ namespace PersonalPPEManager.ViewModels
                     if (SelectedCanvasShoeMasterItem == null || SelectedCanvasShoeCategory == null) { MessageBox.Show("请为白色帆布鞋选择类别和规格主数据。", "选择主数据"); IsSaving = false; return; }
                     if (SelectedCanvasShoeMasterItem.CurrentStock < 1) { MessageBox.Show($"“{SelectedCanvasShoeMasterItem.ItemName}”库存不足。", "库存不足"); IsSaving = false; return; }
                     if (!ValidatePPEItem(true, CanvasShoes_IssueDate, SelectedCanvasShoeMasterItem.ItemName, codeRequired: false, size: SelectedCanvasShoeMasterItem.Size, sizeRequiredIfIssued: true) || string.IsNullOrWhiteSpace(CanvasShoes_Condition)) { if (string.IsNullOrWhiteSpace(CanvasShoes_Condition)) MessageBox.Show($"{SelectedCanvasShoeMasterItem.ItemName}的新旧状态不能为空。", "验证错误"); IsSaving = false; return; }
-                    // TODO: Add CanvasShoe replacement logic if MaxActiveCanvasShoes is configured and exceeded
+                    if (!EnsureActiveLimitNotExceeded(SelectedCanvasShoeCategory.CategoryName, 1, _configService.MaxActiveCanvasShoes, "白色帆布鞋")) { IsSaving = false; return; }
                     assignmentsToAdd.Add(new PPEAssignment { EmployeeID_FK = LoadedEmployee.EmployeeID, PPE_Type = SelectedCanvasShoeCategory.CategoryName, ItemSpecificCode = null, IssueDate = CanvasShoes_IssueDate, Size = SelectedCanvasShoeMasterItem.Size, Condition = CanvasShoes_Condition, ItemMasterID_FK = SelectedCanvasShoeMasterItem.ItemMasterID, IsActive = true });
                     masterItemsToUpdateStock.TryGetValue(SelectedCanvasShoeMasterItem.ItemMasterID, out int cCS); masterItemsToUpdateStock[SelectedCanvasShoeMasterItem.ItemMasterID] = cCS + 1;
                 }

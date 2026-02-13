@@ -1,0 +1,86 @@
+name: Build and Publish
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore PersonalPPEManager.sln
+
+      - name: Build Release x86
+        run: msbuild PersonalPPEManager.sln /t:Build /p:Configuration=Release /p:Platform=x86
+
+      - name: Build Release x64
+        run: msbuild PersonalPPEManager.sln /t:Build /p:Configuration=Release /p:Platform=x64
+
+      - name: Generate version name (date based)
+        id: version
+        shell: pwsh
+        run: |
+          $date = Get-Date -Format "yyyyMMdd"
+          $version = "v${date}-${{ github.run_number }}"
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Package x86/x64 outputs
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.value }}"
+          $targets = @(
+            @{ Platform = "x86"; OutputDir = "bin/x86/Release" },
+            @{ Platform = "x64"; OutputDir = "bin/x64/Release" }
+          )
+
+          foreach ($target in $targets) {
+            $platform = $target.Platform
+            $outputDir = $target.OutputDir
+            $zipName = "PersonalPPEManager-$version-$platform.zip"
+
+            if (-not (Test-Path $outputDir)) {
+              throw "Build output directory '$outputDir' not found for platform '$platform'."
+            }
+
+            if (Test-Path $zipName) {
+              Remove-Item $zipName -Force
+            }
+
+            Compress-Archive -Path "$outputDir/*" -DestinationPath $zipName
+          }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: PersonalPPEManager-${{ steps.version.outputs.value }}
+          path: |
+            PersonalPPEManager-${{ steps.version.outputs.value }}-x86.zip
+            PersonalPPEManager-${{ steps.version.outputs.value }}-x64.zip
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ steps.version.outputs.value }}
+          name: Build ${{ steps.version.outputs.value }}
+          prerelease: true
+          files: |
+            PersonalPPEManager-${{ steps.version.outputs.value }}-x86.zip
+            PersonalPPEManager-${{ steps.version.outputs.value }}-x64.zip
+          generate_release_notes: true
