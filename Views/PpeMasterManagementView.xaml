@@ -65,7 +65,9 @@
                         <StackPanel Orientation="Horizontal">
                             <Button Content="添加新主数据" Command="{Binding AddMasterItemCommand}" Padding="10,5" Margin="0,0,10,0"/>
                             <Button Content="编辑选中主数据" Command="{Binding EditMasterItemCommand}" Padding="10,5" Margin="0,0,10,0"/>
-                            <Button Content="删除选中主数据" Command="{Binding DeleteMasterItemCommand}" Padding="10,5" Background="LightCoral"/>
+                            <Button Content="删除选中主数据" Command="{Binding DeleteMasterItemCommand}" Padding="10,5" Background="LightCoral" Margin="0,0,10,0"/>
+                            <Button Content="导入主数据CSV" Command="{Binding ImportMasterItemsCommand}" Padding="10,5" Margin="0,0,10,0"/>
+                            <Button Content="导出主数据CSV" Command="{Binding ExportMasterItemsCommand}" Padding="10,5"/>
                         </StackPanel>
                     </StackPanel>
 

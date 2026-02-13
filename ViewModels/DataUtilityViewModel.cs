@@ -97,26 +97,13 @@ namespace PersonalPPEManager.ViewModels
                 _ => !string.IsNullOrWhiteSpace(SelectedCsvFilePath) && !IsProcessingFile);
             BackupDatabaseCommand = new RelayCommand(ExecuteBackupDatabase, _ => !IsProcessingFile);
             RestoreDatabaseCommand = new RelayCommand(ExecuteRestoreDatabase, _ => !IsProcessingFile);
+            ExportEmployeesCsvCommand = new RelayCommand(ExecuteExportEmployeesCsv, _ => !IsProcessingFile);
 
             ImportStatusMessage = "请选择一个CSV文件开始导入员工信息。";
             BackupStatusMessage = "点击按钮选择备份位置并开始备份数据库。";
             RestoreStatusMessage = "警告：恢复操作将覆盖当前数据！";
+            ExportStatusMessage = "点击按钮选择导出位置并开始导出所有员工信息。";
             System.Diagnostics.Debug.WriteLine("DEBUG: DataUtilityVM_ctor: Constructor finished.");
-            // ... (构造函数其他部分保持不变) ...
-            _csvService = new CsvService();
-
-            SelectCsvFileCommand = new RelayCommand(ExecuteSelectCsvFile, _ => !IsProcessingFile);
-            StartImportCommand = new RelayCommand(ExecuteStartImport,
-                _ => !string.IsNullOrWhiteSpace(SelectedCsvFilePath) && !IsProcessingFile);
-            BackupDatabaseCommand = new RelayCommand(ExecuteBackupDatabase, _ => !IsProcessingFile);
-            RestoreDatabaseCommand = new RelayCommand(ExecuteRestoreDatabase, _ => !IsProcessingFile);
-            ExportEmployeesCsvCommand = new RelayCommand(ExecuteExportEmployeesCsv, _ => !IsProcessingFile); // <<--- 初始化导出命令
-
-            ImportStatusMessage = "请选择一个CSV文件开始导入员工信息。";
-            BackupStatusMessage = "点击按钮选择备份位置并开始备份数据库。";
-            RestoreStatusMessage = "警告：恢复操作将覆盖当前数据！";
-            ExportStatusMessage = "点击按钮选择导出位置并开始导出所有员工信息。"; // <<--- 初始化导出状态信息
-            // ...
         }
 
         #region Command Execute Methods
