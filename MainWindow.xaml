@@ -1,0 +1,35 @@
+﻿<Window x:Class="PersonalPPEManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PersonalPPEManager"
+        mc:Ignorable="d"
+        Title="个人劳保用品管理系统" Height="720" Width="1280"
+        WindowStartupLocation="CenterScreen"
+        Icon="Assets/app_icon.ico">
+    
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" BorderBrush="LightGray" BorderThickness="0,0,1,0">
+            <StackPanel Margin="10">
+                <TextBlock Text="导航菜单" FontSize="18" FontWeight="Bold" Margin="0,0,0,20" TextAlignment="Center"/>
+                <Button x:Name="BtnEmployeeManagement" Content="员工信息管理" Margin="0,5" Padding="10,5" Click="NavButton_Click"/>
+                <Button x:Name="BtnPPEIssuance" Content="劳保用品发放" Margin="0,5" Padding="10,5" Click="NavButton_Click"/>
+                <Button x:Name="BtnQuery" Content="综合查询" Margin="0,5" Padding="10,5" Click="NavButton_Click"/>
+                <Button x:Name="BtnDataUtility" Content="数据工具" Margin="0,5" Padding="10,5" Click="NavButton_Click"/>
+                <Button x:Name="BtnPpeMasterManagement" Content="劳保用品主数据" Margin="0,5" Padding="10,5" Click="NavButton_Click"/>
+                <Button x:Name="BtnSettings" Content="系统设置" Margin="0,5" Padding="10,5" Click="NavButton_Click"/>
+                <Button x:Name="BtnOperationLog" Content="操作日志" Margin="0,5" Padding="10,5" Click="NavButton_Click"/>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Column="1" Margin="10">
+            <ContentControl x:Name="MainContentArea"/>
+        </Border>
+    </Grid>
+</Window>

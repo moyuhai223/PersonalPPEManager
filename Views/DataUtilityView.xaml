@@ -1,0 +1,104 @@
+﻿<UserControl x:Class="PersonalPPEManager.Views.DataUtilityView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:viewmodels="clr-namespace:PersonalPPEManager.ViewModels"
+             mc:Ignorable="d" 
+             d:DesignHeight="500" d:DesignWidth="800"
+             Background="White">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="数据工具" FontSize="20" FontWeight="Bold" Margin="0,0,0,15"/>
+
+        <TabControl Grid.Row="1">
+            <TabItem Header="导入员工CSV">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="15">
+                        <TextBlock Text="请选择一个CSV文件导入员工基本信息。" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                        <TextBlock Text="CSV文件应包含以下列（第一行为列头，顺序和名称需匹配）：" FontSize="11" Margin="0,0,0,5"/>
+                        <TextBlock Text="EmployeeID,Name,EntryDate,Process,Status,LockerClothes1,LockerShoes1,LockerClothes2,LockerShoes2" FontSize="10" Foreground="DarkSlateGray" Margin="0,0,0,15" TextWrapping="Wrap"/>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="选择文件:" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1" Text="{Binding SelectedCsvFilePath, Mode=OneWay}" IsReadOnly="True" Margin="5,0" VerticalAlignment="Center" Padding="3"/>
+                            <Button Grid.Column="2" Content="浏览..." Command="{Binding SelectCsvFileCommand}" Padding="10,3" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Button Content="开始导入" 
+                                Command="{Binding StartImportCommand}" 
+                                HorizontalAlignment="Left" 
+                                Margin="0,15,0,0" Padding="15,7" FontWeight="Bold"/>
+
+                        <TextBlock Text="导入状态:" Margin="0,20,0,5" FontWeight="SemiBold"/>
+                        <Border Background="LightYellow" Padding="5" CornerRadius="3" MinHeight="60">
+                            <TextBlock Text="{Binding ImportStatusMessage}" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="导出员工数据">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="15">
+                        <TextBlock Text="将系统中所有员工的基本信息导出到一个CSV文件中。" Margin="0,0,0,20" TextWrapping="Wrap"/>
+                        <Button Content="选择导出位置并导出员工CSV" 
+                                Command="{Binding ExportEmployeesCsvCommand}" 
+                                HorizontalAlignment="Left" 
+                                Padding="15,7" FontWeight="Bold"/>
+                        <TextBlock Text="导出状态:" Margin="0,20,0,5" FontWeight="SemiBold"/>
+                        <Border Background="LightGreen" Padding="5" CornerRadius="3" MinHeight="40">
+                            <TextBlock Text="{Binding ExportStatusMessage}" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <TabItem Header="数据备份">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="15">
+                        <TextBlock Text="将当前的劳保用品管理数据库备份到您选择的指定位置。" Margin="0,0,0,20" TextWrapping="Wrap"/>
+                        <Button Content="选择备份位置并开始备份" 
+                                Command="{Binding BackupDatabaseCommand}" 
+                                HorizontalAlignment="Left" 
+                                Padding="15,7" FontWeight="Bold"/>
+
+                        <TextBlock Text="备份状态:" Margin="0,20,0,5" FontWeight="SemiBold"/>
+                        <Border Background="LightCyan" Padding="5" CornerRadius="3" MinHeight="40">
+                            <TextBlock Text="{Binding BackupStatusMessage}" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="数据恢复">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="15">
+                        <TextBlock Text="警告：从此功能恢复数据将会覆盖当前所有数据！" FontWeight="Bold" Foreground="Red" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                        <TextBlock Text="请确保您已备份了当前重要数据，或确认要用所选备份替换当前数据。此操作通常无法撤销。" Margin="0,0,0,20" TextWrapping="Wrap"/>
+
+                        <Button Content="选择备份文件并恢复数据..." 
+                                Command="{Binding RestoreDatabaseCommand}" 
+                                HorizontalAlignment="Left" 
+                                Padding="15,7" FontWeight="Bold"
+                                Background="OrangeRed" Foreground="White"/>
+
+                        <TextBlock Text="恢复状态:" Margin="0,20,0,5" FontWeight="SemiBold"/>
+                        <Border Background="MistyRose" Padding="5" CornerRadius="3" MinHeight="40">
+                            <TextBlock Text="{Binding RestoreStatusMessage}" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>
