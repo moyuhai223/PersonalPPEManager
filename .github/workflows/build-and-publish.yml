@@ -1,0 +1,68 @@
+name: Build and Publish
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore PersonalPPEManager.sln
+
+      - name: Build Release
+        run: msbuild PersonalPPEManager.sln /t:Build /p:Configuration=Release /p:Platform=AnyCPU
+
+      - name: Generate version name (date based)
+        id: version
+        shell: pwsh
+        run: |
+          $date = Get-Date -Format "yyyyMMdd"
+          $version = "v${date}-${{ github.run_number }}"
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Package build output
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.value }}"
+          $outputDir = "bin/Release"
+          $zipName = "PersonalPPEManager-$version.zip"
+
+          if (-not (Test-Path $outputDir)) {
+            throw "Build output directory '$outputDir' not found."
+          }
+
+          if (Test-Path $zipName) {
+            Remove-Item $zipName -Force
+          }
+
+          Compress-Archive -Path "$outputDir/*" -DestinationPath $zipName
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PersonalPPEManager-${{ steps.version.outputs.value }}
+          path: PersonalPPEManager-${{ steps.version.outputs.value }}.zip
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ steps.version.outputs.value }}
+          name: Build ${{ steps.version.outputs.value }}
+          prerelease: true
+          files: PersonalPPEManager-${{ steps.version.outputs.value }}.zip
+          generate_release_notes: true
