@@ -196,39 +196,120 @@ namespace PersonalPPEManager.ViewModels
 
         private void LoadAvailableSuitMasterItems()
         {
-            AvailableSuitMasterItems.Clear();
+            LoadMasterItemsByCategory(
+                SelectedSuitCategory,
+                AvailableSuitMasterItems,
+                "LoadAvailableSuitMasterItems",
+                "suit");
             SelectedSuitMasterItem = null;
-            if (SelectedSuitCategory != null && SelectedSuitCategory.CategoryID > 0)
-            { /* ... (与之前版本相同) ... */  Debug.WriteLine($"DEBUG: PPEIssuanceVM.LoadAvailableSuitMasterItems for CategoryID: {SelectedSuitCategory.CategoryID}"); try { var mi = SQLiteDataAccess.GetMasterItemsByCategoryId(SelectedSuitCategory.CategoryID); foreach (var i in mi.OrderBy(item => item.ItemName)) AvailableSuitMasterItems.Add(i); Debug.WriteLine($"DEBUG: Loaded {AvailableSuitMasterItems.Count} suit master items."); } catch (Exception ex) { Debug.WriteLine($"EX in LoadAvailableSuitMasterItems: {ex.Message}"); MessageBox.Show($"加载主数据失败: {ex.Message}"); } }
-            else { Debug.WriteLine("DEBUG: PPEIssuanceVM.LoadAvailableSuitMasterItems: No valid category selected."); }
-        }
-        private void LoadAvailableHatMasterItems()
-        {
-            AvailableHatMasterItems.Clear();
-            SelectedHatMasterItem = null;
-            if (SelectedHatCategory != null && SelectedHatCategory.CategoryID > 0)
-            { Debug.WriteLine($"DEBUG: PPEIssuanceVM.LoadAvailableHatMasterItems for CategoryID: {SelectedHatCategory.CategoryID}"); try { var mi = SQLiteDataAccess.GetMasterItemsByCategoryId(SelectedHatCategory.CategoryID); foreach (var i in mi.OrderBy(item => item.ItemName)) AvailableHatMasterItems.Add(i); Debug.WriteLine($"DEBUG: Loaded {AvailableHatMasterItems.Count} hat master items."); } catch (Exception ex) { Debug.WriteLine($"EX in LoadAvailableHatMasterItems: {ex.Message}"); MessageBox.Show($"加载主数据失败: {ex.Message}"); } }
-            else { Debug.WriteLine("DEBUG: PPEIssuanceVM.LoadAvailableHatMasterItems: No valid category selected."); }
-        }
-        private void LoadAvailableSafetyShoeMasterItems()
-        {
-            AvailableSafetyShoeMasterItems.Clear();
-            SelectedSafetyShoeMasterItem = null;
-            if (SelectedSafetyShoeCategory != null && SelectedSafetyShoeCategory.CategoryID > 0)
-            { Debug.WriteLine($"DEBUG: PPEIssuanceVM.LoadAvailableSafetyShoeMasterItems for CategoryID: {SelectedSafetyShoeCategory.CategoryID}"); try { var mi = SQLiteDataAccess.GetMasterItemsByCategoryId(SelectedSafetyShoeCategory.CategoryID); foreach (var i in mi.OrderBy(item => item.ItemName)) AvailableSafetyShoeMasterItems.Add(i); Debug.WriteLine($"DEBUG: Loaded {AvailableSafetyShoeMasterItems.Count} safety shoe master items."); } catch (Exception ex) { Debug.WriteLine($"EX in LoadAvailableSafetyShoeMasterItems: {ex.Message}"); MessageBox.Show($"加载主数据失败: {ex.Message}"); } }
-            else { Debug.WriteLine("DEBUG: PPEIssuanceVM.LoadAvailableSafetyShoeMasterItems: No valid category selected."); }
-        }
-        private void LoadAvailableCanvasShoeMasterItems()
-        {
-            AvailableCanvasShoeMasterItems.Clear();
-            SelectedCanvasShoeMasterItem = null;
-            if (SelectedCanvasShoeCategory != null && SelectedCanvasShoeCategory.CategoryID > 0)
-            { Debug.WriteLine($"DEBUG: PPEIssuanceVM.LoadAvailableCanvasShoeMasterItems for CategoryID: {SelectedCanvasShoeCategory.CategoryID}"); try { var mi = SQLiteDataAccess.GetMasterItemsByCategoryId(SelectedCanvasShoeCategory.CategoryID); foreach (var i in mi.OrderBy(item => item.ItemName)) AvailableCanvasShoeMasterItems.Add(i); Debug.WriteLine($"DEBUG: Loaded {AvailableCanvasShoeMasterItems.Count} canvas shoe master items."); } catch (Exception ex) { Debug.WriteLine($"EX in LoadAvailableCanvasShoeMasterItems: {ex.Message}"); MessageBox.Show($"加载主数据失败: {ex.Message}"); } }
-            else { Debug.WriteLine("DEBUG: PPEIssuanceVM.LoadAvailableCanvasShoeMasterItems: No valid category selected."); }
         }
 
-        private bool CanExecuteLoadEmployee(object parameter) { /* ... 与之前版本相同 ... */ return !string.IsNullOrWhiteSpace(SearchEmployeeID) && !IsSaving; }
-        private void ExecuteLoadEmployee(object parameter) { /* ... 与之前版本相同 ... */ Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Method started. Searching for EmployeeID: '{SearchEmployeeID}'"); if (string.IsNullOrWhiteSpace(SearchEmployeeID)) { Debug.WriteLine("DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: SearchEmployeeID is null or whitespace. Aborting load."); LoadedEmployee = null; MessageBox.Show("请输入有效的员工工号。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning); return; } Employee foundEmployee = null; try { foundEmployee = SQLiteDataAccess.GetEmployeeById(SearchEmployeeID); } catch (Exception ex) { Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Exception during SQLiteDataAccess.GetEmployeeById: {ex.Message}\n{ex.StackTrace}"); MessageBox.Show($"加载员工信息时发生数据库错误: {ex.Message}", "数据库错误", MessageBoxButton.OK, MessageBoxImage.Error); LoadedEmployee = null; return; } LoadedEmployee = foundEmployee; if (LoadedEmployee == null) { Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: No employee found for ID: '{SearchEmployeeID}'."); MessageBox.Show($"未找到工号为 '{SearchEmployeeID}' 的员工。", "提示", MessageBoxButton.OK, MessageBoxImage.Information); } else { Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Employee found and set. ID: '{LoadedEmployee.EmployeeID}', Name: '{LoadedEmployee.Name}'."); } Debug.WriteLine("DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Method finished."); }
+        private void LoadAvailableHatMasterItems()
+        {
+            LoadMasterItemsByCategory(
+                SelectedHatCategory,
+                AvailableHatMasterItems,
+                "LoadAvailableHatMasterItems",
+                "hat");
+            SelectedHatMasterItem = null;
+        }
+
+        private void LoadAvailableSafetyShoeMasterItems()
+        {
+            LoadMasterItemsByCategory(
+                SelectedSafetyShoeCategory,
+                AvailableSafetyShoeMasterItems,
+                "LoadAvailableSafetyShoeMasterItems",
+                "safety shoe");
+            SelectedSafetyShoeMasterItem = null;
+        }
+
+        private void LoadAvailableCanvasShoeMasterItems()
+        {
+            LoadMasterItemsByCategory(
+                SelectedCanvasShoeCategory,
+                AvailableCanvasShoeMasterItems,
+                "LoadAvailableCanvasShoeMasterItems",
+                "canvas shoe");
+            SelectedCanvasShoeMasterItem = null;
+        }
+
+        private void LoadMasterItemsByCategory(
+            PpeCategory selectedCategory,
+            ObservableCollection<PpeMasterItem> targetCollection,
+            string methodName,
+            string itemTypeLabel)
+        {
+            targetCollection.Clear();
+
+            if (selectedCategory != null && selectedCategory.CategoryID > 0)
+            {
+                Debug.WriteLine($"DEBUG: PPEIssuanceVM.{methodName} for CategoryID: {selectedCategory.CategoryID}");
+                try
+                {
+                    var masterItems = SQLiteDataAccess.GetMasterItemsByCategoryId(selectedCategory.CategoryID);
+                    foreach (var item in masterItems.OrderBy(i => i.ItemName))
+                    {
+                        targetCollection.Add(item);
+                    }
+
+                    Debug.WriteLine($"DEBUG: Loaded {targetCollection.Count} {itemTypeLabel} master items.");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"EX in {methodName}: {ex.Message}");
+                    MessageBox.Show($"加载主数据失败: {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.WriteLine($"DEBUG: PPEIssuanceVM.{methodName}: No valid category selected.");
+            }
+        }
+
+        private bool CanExecuteLoadEmployee(object parameter)
+        {
+            return !string.IsNullOrWhiteSpace(SearchEmployeeID) && !IsSaving;
+        }
+
+        private void ExecuteLoadEmployee(object parameter)
+        {
+            Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Method started. Searching for EmployeeID: '{SearchEmployeeID}'");
+
+            if (string.IsNullOrWhiteSpace(SearchEmployeeID))
+            {
+                Debug.WriteLine("DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: SearchEmployeeID is null or whitespace. Aborting load.");
+                LoadedEmployee = null;
+                MessageBox.Show("请输入有效的员工工号。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            Employee foundEmployee = null;
+            try
+            {
+                foundEmployee = SQLiteDataAccess.GetEmployeeById(SearchEmployeeID);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Exception during SQLiteDataAccess.GetEmployeeById: {ex.Message}\n{ex.StackTrace}");
+                MessageBox.Show($"加载员工信息时发生数据库错误: {ex.Message}", "数据库错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                LoadedEmployee = null;
+                return;
+            }
+
+            LoadedEmployee = foundEmployee;
+            if (LoadedEmployee == null)
+            {
+                Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: No employee found for ID: '{SearchEmployeeID}'.");
+                MessageBox.Show($"未找到工号为 '{SearchEmployeeID}' 的员工。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                Debug.WriteLine($"DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Employee found and set. ID: '{LoadedEmployee.EmployeeID}', Name: '{LoadedEmployee.Name}'.");
+            }
+
+            Debug.WriteLine("DEBUG: PPEIssuanceVM.ExecuteLoadEmployee: Method finished.");
+        }
 
         private void ResetPPEInputs()
         {
